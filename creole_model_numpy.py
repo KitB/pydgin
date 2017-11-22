@@ -5,26 +5,34 @@ def do_epoch(groups, delta_days, delta_groups, lru, lrc):
     # Update population
     for i, (group, group_delta) in enumerate(zip(groups, delta_groups)):
         if group_delta > 0:
-            immigrants = np.zeros((group_delta, len(groups)))
-            immigrants[:, i] = 1
+            immigrants = np.zeros((group_delta, len(groups)))  # agent net sy array
             groups[i] = np.concatenate((groups[i], immigrants))
         elif group_delta < 0:
             indices = np.arange(group.shape[0])
             idx_to_keep = np.random.choice(indices,
-                                           size=(group.shape[0] + group_delta),
+                                           size=(group.shape[0] + group_delta),  # group_delta is negative
                                            replace=False)
             groups[i] = groups[i][idx_to_keep]
 
+        # die deel stoor die groep waarvan die agent oorspronklik kom
         group_idx = np.concatenate([[i] * group.shape[0] for i, group in enumerate(groups)])
         everyone = np.concatenate(groups)
 
+        # e.g.
+        # groups = [[1, 2], [3, 4, 5], [6, 7, 8]]
+        # everyone =  [1, 2, 3, 4, 5, 6, 7, 8]
+        # group_idx = [0, 0, 1, 1, 1, 2, 2, 2]
+
     # Communicate
-    selections = np.random.randint(everyone.shape[0], size=(delta_days, everyone.shape[0]))
+    # Select conversation partners
+    pop_size = everyone.shape[0]
+    selections = np.random.randint(pop_size, size=(delta_days, pop_size))
 
     for day in selections:
         # The following index manipulation implements "people don't speak to themselves"
-        all_idx = np.arange(everyone.shape[0], dtype=np.int32)
+        all_idx = np.arange(pop_size, dtype=np.int32)  # [0, 1, 2, 3, ..., pop_size]
         neq_idx = day != all_idx  # a boolean array of whether or not each index has "you == me"
+        # this is element-wise ^
 
         us_idx = all_idx[neq_idx]
         # `day` might reasonably be called `day_idx`
@@ -78,8 +86,8 @@ def speak(population):
 
 class NumpyModel(object):
     def __init__(self, populations_path, epochs_path,
-                 learning_rate_coordinated=0.01,
-                 learning_rate_uncoordinated=0.001):
+                 learning_rate_coordinated,
+                 learning_rate_uncoordinated):
         self.populations = np.loadtxt(populations_path, dtype=np.int32)
         self.epochs = np.loadtxt(epochs_path, dtype=np.int32)
         self.lr_c = learning_rate_coordinated
@@ -100,10 +108,25 @@ class NumpyModel(object):
         return list(np.average(everyone, axis=0))
 
 
+def get_args():
+    import argparse
+    ap = argparse.ArgumentParser()
+    ap.add_argument('population', type=str)
+    ap.add_argument('time', type=str)
+    ap.add_argument('lc', type=float, nargs='?', default=0.01)
+    ap.add_argument('lu', type=float, nargs='?', default=0.001)
+    return ap.parse_args()
+
+
 def main():
-    m = NumpyModel('F81_pop.txt', 'Time.txt')
+    args = get_args()
+    do_it(args.population, args.time, args.lc, args.lu)
+
+
+def do_it(population, time, lc, lu):
+    m = NumpyModel(population, time, lc, lu)
     m.run()
-    print m.get_distribution()
+    return m.get_distribution()
 
 
 if __name__ == '__main__':
