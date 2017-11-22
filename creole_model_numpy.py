@@ -6,6 +6,7 @@ def do_epoch(groups, delta_days, delta_groups, lru, lrc):
     for i, (group, group_delta) in enumerate(zip(groups, delta_groups)):
         if group_delta > 0:
             immigrants = np.zeros((group_delta, len(groups)))  # agent net sy array
+            immigrants[:, i] = 1
             groups[i] = np.concatenate((groups[i], immigrants))
         elif group_delta < 0:
             indices = np.arange(group.shape[0])
