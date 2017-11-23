@@ -1,3 +1,4 @@
+import csv
 import numpy as np
 
 
@@ -85,14 +86,21 @@ def speak(population):
     return np.argmax(cumulative_sums > random_chances, axis=1)
 
 
-class NumpyModel(object):
+class Model(object):
     def __init__(self, populations_path, epochs_path,
                  learning_rate_coordinated,
                  learning_rate_uncoordinated):
-        self.populations = np.loadtxt(populations_path, dtype=np.int32)
+        # Skip the header row of the population, this means we only work on the outputs of
+        # 'feature_transformation.py'
+        self.populations = np.loadtxt(populations_path, dtype=np.int32,
+                                      skiprows=1, delimiter=',', ndmin=2)
         self.epochs = np.loadtxt(epochs_path, dtype=np.int32)
         self.lr_c = learning_rate_coordinated
         self.lr_u = learning_rate_uncoordinated
+
+        # We skipped the headers row above so lets open it with the csv library
+        with open(populations_path, 'rb') as popfile:
+            self.headers = csv.reader(popfile).next()
 
     def run(self):
         n_epochs, n_langs = self.populations.shape
@@ -104,19 +112,27 @@ class NumpyModel(object):
 
         self.groups = groups
 
-    def get_distribution(self):
+    def calc_distribution(self):
         everyone = np.concatenate(self.groups)
-        return list(np.average(everyone, axis=0))
+        return np.average(everyone, axis=0)
+
+    @property
+    def winner(self):
+        return self.headers[np.argmax(self.calc_distribution())]
 
 
-def get_args():
+def get_argparser():
     import argparse
     ap = argparse.ArgumentParser()
     ap.add_argument('population', type=str)
     ap.add_argument('time', type=str)
     ap.add_argument('lc', type=float, nargs='?', default=0.01)
     ap.add_argument('lu', type=float, nargs='?', default=0.001)
-    return ap.parse_args()
+    return ap
+
+
+def get_args():
+    return get_argparser().parse_args()
 
 
 def main():
@@ -125,7 +141,7 @@ def main():
 
 
 def do_it(population, time, lc, lu):
-    m = NumpyModel(population, time, lc, lu)
+    m = Model(population, time, lc, lu)
     m.run()
     return m.get_distribution()
 
