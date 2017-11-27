@@ -3,11 +3,16 @@ import numpy as np
 
 
 def do_epoch(groups, delta_days, delta_groups, lru, lrc):
-    # Update population
+    # Update population - sit die deel in sy eie funksie en roep dit twee keer 
+    # vir die pyp 
+    # die feature_transformation maak klaar txt files met 'n kolom vir die pyp
     for i, (group, group_delta) in enumerate(zip(groups, delta_groups)):
         if group_delta > 0:
             immigrants = np.zeros((group_delta, len(groups)))  # agent net sy array
             immigrants[:, i] = 1
+            # implementeer my oorspronkike oplossing vir die pipe hier 
+            # los die feature_transformation soos wat dit tans is, dit sal die drie 
+            # kolomme gee wat jy wil he, implementeer dan die half/half ding van daar af 
             groups[i] = np.concatenate((groups[i], immigrants))
         elif group_delta < 0:
             indices = np.arange(group.shape[0])
@@ -29,6 +34,9 @@ def do_epoch(groups, delta_days, delta_groups, lru, lrc):
     # Select conversation partners
     pop_size = everyone.shape[0]
     selections = np.random.randint(pop_size, size=(delta_days, pop_size))
+    # die array stoor die lukrake indekse van gesels maats 
+    # dis die deel wat sal moet verander vir 'n gestrukrureerde koloniale situasie soos beskryf  
+    # in Tria et al 2015, gebaseer op Chaundenson 2001
 
     for day in selections:
         # The following index manipulation implements "people don't speak to themselves"
@@ -63,6 +71,21 @@ def do_epoch(groups, delta_days, delta_groups, lru, lrc):
         group[:] = everyone[group_idx == i]
 
     return groups
+
+def update_population():
+    # bou die groepe, maar wat van die pyp? bou dit dan ander groupe?
+        # opsies:
+        # pyp van twee reeds bestaande opsies, 
+        # pyp van een bestaande en een nuwe opsie, 
+        # pyp van twee nie bestaande opsies 
+
+        # eintlik net twee, of die opsie bestaan, of dit doen nie.
+        # split op pyp 
+        # deal met bestaande opsies
+            # kry bestaande opsie se indeks 
+        
+
+    #return groups - ek dink
 
 
 def make_update_array(population, columns, learning_rates):
@@ -100,7 +123,7 @@ class Model(object):
 
         # We skipped the headers row above so lets open it with the csv library
         with open(populations_path, 'rb') as popfile:
-            self.headers = csv.reader(popfile).next()
+            self.headers = csv.reader(popfile).next() # stoor die hearders, Model.headers roep dit 
 
     def run(self):
         n_epochs, n_langs = self.populations.shape
