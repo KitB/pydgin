@@ -83,7 +83,7 @@ def update_population():
         # split op pyp 
         # deal met bestaande opsies
             # kry bestaande opsie se indeks 
-        
+    pass
 
     #return groups - ek dink
 
